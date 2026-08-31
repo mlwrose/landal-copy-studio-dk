@@ -531,10 +531,32 @@ function api(p){
   return fetch("/.netlify/functions/generate",{
     method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(p)
   }).then(function(r){
-    return r.json().then(function(d){
-      if (!r.ok) throw new Error(d.error || ("Request failed with " + r.status));
+    return r.text().then(function(txt){
+      var d = null;
+      try { d = JSON.parse(txt); } catch(e) { d = null; }
+
+      if (!d){
+        if (r.status === 404 || /^\s*<(!doctype|html)/i.test(txt))
+          throw new Error("The generate function is not deployed. The site returned its "+
+            "404 page instead of JSON. Check that netlify/functions/generate.js and "+
+            "netlify/functions/skill-dk.js are both in the repo, and that the Functions "+
+            "tab in Netlify lists 'generate'.");
+        if (!txt.trim())
+          throw new Error("The function returned an empty response (HTTP "+r.status+"). "+
+            "That usually means it crashed on startup. The most common cause is "+
+            "skill-dk.js missing from netlify/functions, since generate.js requires it.");
+        throw new Error("The function returned something that is not JSON (HTTP "+
+          r.status+"): "+txt.slice(0,140));
+      }
+
+      if (!r.ok) throw new Error(d.error || ("Request failed with "+r.status));
       return d;
     });
+  }).catch(function(e){
+    if (e instanceof TypeError)
+      throw new Error("Could not reach the function at all. Check the site is up and "+
+        "that you are not offline.");
+    throw e;
   });
 }
 function busy(el,on,msg){ el.className="status"; el.innerHTML = on ? '<span class="spin"></span>'+esc(msg||"Working") : ""; }

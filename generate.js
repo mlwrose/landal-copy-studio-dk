@@ -16,7 +16,28 @@
  * It is never hardcoded and never sent to the browser.
  */
 
-const { SKILL_DK } = require("./skill-dk.js");
+/* The skill is a generated module. If it is missing from the bundle, a bare require
+ * throws at module load, before the handler exists, and Netlify returns an empty
+ * body with no explanation. Catching it here turns that into a readable error. */
+let SKILL_DK = null;
+let SKILL_ERROR = null;
+try {
+  SKILL_DK = require("./skill-dk.js").SKILL_DK;
+  if (typeof SKILL_DK !== "string" || SKILL_DK.length < 2000) {
+    SKILL_ERROR =
+      "skill-dk.js loaded but the skill looks empty or truncated (" +
+      (SKILL_DK ? SKILL_DK.length : 0) +
+      " characters, expected about 25000). Regenerate it with " +
+      "node scripts/sync-skill.js and commit the result.";
+    SKILL_DK = null;
+  }
+} catch (err) {
+  SKILL_ERROR =
+    "Could not load netlify/functions/skill-dk.js. It is a generated file and is " +
+    "probably not in the repo. Run node scripts/sync-skill.js locally, then commit " +
+    "netlify/functions/skill-dk.js alongside generate.js. Underlying error: " +
+    (err && err.message ? err.message : String(err));
+}
 
 const MODEL = "claude-sonnet-4-6";
 const API_URL = "https://api.anthropic.com/v1/messages";
@@ -404,7 +425,24 @@ function json(statusCode, body) {
 }
 
 exports.handler = async function (event) {
+  /* GET is a health check. Open the function URL in a browser to see what is
+   * actually wrong without having to read the Netlify function logs. No secrets
+   * are returned, only whether the key is present. */
+  if (event.httpMethod === "GET") {
+    return json(SKILL_ERROR ? 500 : 200, {
+      ok: !SKILL_ERROR && !!process.env.ANTHROPIC_API_KEY,
+      skillLoaded: !!SKILL_DK,
+      skillLength: SKILL_DK ? SKILL_DK.length : 0,
+      skillError: SKILL_ERROR,
+      apiKeyPresent: !!process.env.ANTHROPIC_API_KEY,
+      model: MODEL,
+      modes: Object.keys(BUILDERS),
+    });
+  }
+
   if (event.httpMethod !== "POST") return json(405, { error: "Use POST." });
+
+  if (SKILL_ERROR) return json(500, { error: SKILL_ERROR });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
