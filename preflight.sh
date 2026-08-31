@@ -7,35 +7,49 @@ ok(){ echo "  ok    $1"; }
 bad(){ echo "  FAIL  $1"; fail=1; }
 
 echo "the two files that must exist"
-[ -f index.html ] && ok "index.html at root" || bad "index.html missing from root"
-[ -f netlify/functions/generate.js ] \
-  && ok "netlify/functions/generate.js" \
+[ -f public/index.html ] && ok "public/index.html" \
+  || bad "public/index.html missing. The site will serve a 404 at /"
+[ -f netlify/functions/generate.js ] && ok "netlify/functions/generate.js" \
   || bad "netlify/functions/generate.js missing. Netlify will not create the function."
 
-echo "stray files at root"
-for f in generate.js sync-skill.js check-rules.js landal-copy-skill-dk.md skill-dk.js; do
+echo "nothing flattened to the root"
+for f in index.html generate.js sync-skill.js check-rules.js landal-copy-skill-dk.md skill-dk.js; do
   [ -f "$f" ] && bad "$f is at root, the folder structure was flattened" || ok "no stray $f"
 done
 
-echo "function is self contained"
-if grep -qE 'require\("\./' netlify/functions/generate.js 2>/dev/null; then
-  bad "generate.js requires a sibling file; it must be self contained"
+echo "publish and functions must not overlap"
+# Read real settings only. Comment lines mention these keys too, so drop them first.
+toml_get(){
+  grep -v '^[[:space:]]*#' netlify.toml \
+    | grep -E "^[[:space:]]*$1[[:space:]]*=" \
+    | head -1 \
+    | sed -E 's/.*=[[:space:]]*"([^"]*)".*/\1/'
+}
+pub=$(toml_get publish)
+fns=$(toml_get functions)
+[ -n "$pub" ] && ok "publish is '$pub'" || bad "publish not set in netlify.toml"
+[ -n "$fns" ] && ok "functions is '$fns'" || bad "functions not set in netlify.toml"
+if [ "$pub" = "." ] || case "$fns" in "$pub"/*) true;; *) false;; esac; then
+  bad "functions dir is inside the publish dir. Netlify will not deploy the function."
 else
-  ok "no sibling requires"
+  ok "functions dir is outside the publish dir"
 fi
-if grep -q 'PLACEHOLDER, run node' netlify/functions/generate.js 2>/dev/null; then
-  bad "the skill block is still a placeholder. Run node scripts/sync-skill.js"
-else
-  ok "skill block filled in"
-fi
-chars=$(node -e "const s=require('fs').readFileSync('netlify/functions/generate.js','utf8');const m=s.match(/const SKILL_DK = \`([\s\S]*?)\`;/);process.stdout.write(String(m?m[1].length:0))" 2>/dev/null)
-[ "${chars:-0}" -gt 5000 ] && ok "skill is $chars characters" || bad "skill block too short ($chars chars)"
-
-echo "netlify config"
-grep -q 'functions *= *"netlify/functions"' netlify.toml && ok "functions directory set" \
-  || bad "functions directory not set in netlify.toml"
 grep -qE '^ *command *=' netlify.toml && ok "build command pinned" \
   || bad "no build command; Netlify will auto-detect and run npm run build"
+
+echo "the skill must not be publicly served"
+[ -f public/landal-copy-skill-dk.md ] && bad "the skill is inside public/ and would be downloadable" \
+  || ok "skill is not in the publish dir"
+
+echo "function is self contained"
+grep -qE 'require\("\./' netlify/functions/generate.js 2>/dev/null \
+  && bad "generate.js requires a sibling file; it must be self contained" \
+  || ok "no sibling requires"
+grep -q 'PLACEHOLDER, run node' netlify/functions/generate.js 2>/dev/null \
+  && bad "the skill block is still a placeholder. Run node scripts/sync-skill.js" \
+  || ok "skill block filled in"
+chars=$(node -e "const s=require('fs').readFileSync('netlify/functions/generate.js','utf8');const m=s.match(/const SKILL_DK = \`([\s\S]*?)\`;/);process.stdout.write(String(m?m[1].length:0))" 2>/dev/null)
+[ "${chars:-0}" -gt 5000 ] && ok "skill is $chars characters" || bad "skill block too short ($chars chars)"
 
 echo "syntax"
 node --check netlify/functions/generate.js 2>/dev/null && ok "generate.js parses" \

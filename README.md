@@ -32,12 +32,23 @@ prices and dates get a warn flag rather than a fail, because sometimes they are 
 
 ## Architecture
 
-    index.html                      Frontend. Must be at the repo root
+    public/index.html               Frontend. This is the entire publish directory
     netlify/functions/generate.js   Backend. Self contained, skill inlined
     skill/landal-copy-skill-dk.md   Skill, readable source of truth
     scripts/sync-skill.js           Injects the markdown into generate.js
     scripts/check-rules.js          Rule and drift check
     scripts/preflight.sh            Run this before every push
+
+### Why the frontend lives in public/
+
+Netlify requires the functions directory to sit outside the publish directory. An earlier
+version of this repo used `publish = "."`, which put `netlify/functions` inside the
+published root. Two things went wrong as a result: the function was never deployed, and
+the repo source was served as static files, so the Danish skill was downloadable from the
+live site.
+
+The frontend therefore lives in `public/` and that is the whole publish directory.
+Nothing else is served. `preflight.sh` fails if the two directories ever overlap again.
 
 Only the first two files are needed at runtime. Everything under `scripts/` and
 `skill/` is a development convenience: if it went missing the deployed site would

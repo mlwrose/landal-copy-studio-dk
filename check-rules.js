@@ -10,7 +10,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 
 const FILES = [
-  "index.html",
+  "public/index.html",
   "netlify/functions/generate.js",
   "skill/landal-copy-skill-dk.md",
   "README.md"

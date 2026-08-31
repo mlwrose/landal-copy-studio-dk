@@ -1,16 +1,23 @@
-# The build command is deliberately a no-op.
+# Structure matters here. Netlify requires the functions directory to sit OUTSIDE
+# the publish directory. With publish = "." the functions folder is inside the
+# published root, which stops the function deploying and also serves the repo
+# source (including the skill) as static files.
 #
-# index.html is static and netlify/functions/skill-dk.js is committed, so there is
-# nothing to compile at deploy time. But leaving `command` unset is not the same as
-# having no build: Netlify falls back to framework detection, finds package.json, and
-# runs `npm run build`, which does not exist here. Pinning it to a no-op stops that.
+# So the frontend lives in public/ and nothing else is published.
 #
-# The skill is synced locally before committing, never here:
+#   public/index.html               served at /
+#   netlify/functions/generate.js   served at /.netlify/functions/generate
+#
+# The build command is a deliberate no-op. Leaving `command` unset is not the same
+# as having no build: Netlify falls back to framework detection, finds package.json,
+# and runs `npm run build`, which does not exist here.
+#
+# The skill is inlined into generate.js and synced locally, never at build time:
 #   node scripts/sync-skill.js && node scripts/check-rules.js
 
 [build]
   command = "echo 'no build step required'"
-  publish = "."
+  publish = "public"
   functions = "netlify/functions"
 
 [functions]
