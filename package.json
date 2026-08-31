@@ -1,0 +1,10 @@
+{
+  "name": "landal-dk-copy-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DK Copy Studio. Landal Danish market copywriting tool.",
+  "scripts": {
+    "sync": "node scripts/sync-skill.js",
+    "check": "node scripts/check-rules.js"
+  }
+}
