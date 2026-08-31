@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DK Copy Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16211c; --paper:#f1f2ed; --surface:#fff; --fog:#dddfd7; --rule:#c6c9be;
+  --muted:#5c665e; --sea:#2f5d62; --sea-soft:#e4ecec; --rosehip:#a6432f;
+  --rosehip-soft:#f6e6e2; --moss:#5f7050; --moss-soft:#e8eee2; --amber:#8a6d1f;
+  --amber-soft:#f5eeda;
+  --sans:"Archivo",system-ui,sans-serif; --serif:"Newsreader",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;
+  line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 110px}
+
+header.top{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;
+  padding:32px 0 20px;border-bottom:1px solid var(--rule);margin-bottom:22px}
+.mark{font-family:var(--serif);font-size:29px;letter-spacing:-.015em}
+.mark span{color:var(--sea)}
+.top .sub{color:var(--muted);font-size:13.5px}
+.top .spacer{flex:1}
+.langbox{display:flex;align-items:center;gap:10px}
+.lbl{font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:6px 13px;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.debugbar{background:var(--sea-soft);border:1px solid #bcd0d1;border-radius:2px;
+  padding:9px 13px;font-size:13px;color:#254a4e;margin-bottom:24px}
+.debugbar.hide{display:none}
+
+/* ---- sticky idea bar ---- */
+.ideabar{position:sticky;top:0;z-index:30;background:var(--paper);
+  border-bottom:1px solid var(--rule);padding:13px 0 12px;margin-bottom:6px}
+.ideabar.hide{display:none}
+.ideabar .in{display:flex;gap:16px;align-items:flex-start}
+.ideabar .dnawrap{flex:1;border-left:3px solid var(--sea);padding-left:13px}
+.ideabar .k{font-size:11px;color:var(--sea);margin-bottom:2px}
+.ideabar textarea{font-family:var(--serif);font-size:18px;line-height:1.35;border:0;
+  padding:0;background:transparent;width:100%;resize:none;min-height:26px;overflow:hidden}
+.ideabar .side{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none}
+.branchsw{display:inline-flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;background:var(--surface)}
+.branchsw button{border:0;background:transparent;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.branchsw button[aria-pressed="true"]{background:var(--sea);color:#fff}
+.stale{background:var(--amber-soft);color:var(--amber);font-size:11.5px;padding:3px 8px;border-radius:2px}
+.stale.hide{display:none}
+
+/* ---- steps ---- */
+.step{border-top:1px solid var(--rule);padding:24px 0}
+.step:first-of-type{border-top:0}
+.step.locked{opacity:.38;pointer-events:none}
+.step h2{font-size:13px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:9px}
+.step h2 .n{width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;
+  font-size:11px;display:grid;place-items:center;flex:none}
+.step .lede{color:var(--muted);font-size:13.5px;margin:0 0 15px 28px}
+.step .inner{margin-left:28px}
+@media(max-width:640px){.step .lede,.step .inner{margin-left:0}}
+
+label.f{display:block;margin-bottom:14px}
+label.f > .t{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+input[type=text],textarea,select{width:100%;background:var(--surface);border:1px solid var(--rule);
+  border-radius:2px;padding:9px 11px;font-size:14.5px}
+textarea{resize:vertical;min-height:62px;line-height:1.55}
+.seedbox{font-family:var(--serif);font-size:22px;line-height:1.35;min-height:84px;padding:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 18px}
+@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:700px){.doors{grid-template-columns:1fr}}
+.door{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:19px}
+.door h3{margin:0 0 3px;font-size:14px;font-weight:600}
+.door .d{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--rule);background:var(--surface);border-radius:2px;
+  padding:6px 11px;font-size:13px;cursor:pointer;color:var(--muted);text-align:left}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip small{display:block;font-size:11px;opacity:.65;margin-top:1px}
+.chip.sugg{border-color:var(--sea);color:var(--sea)}
+.chip.sugg[aria-pressed="true"]{background:var(--sea);color:#fff;border-color:var(--sea)}
+
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:2px;
+  padding:10px 20px;cursor:pointer;font-size:14.5px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.small{padding:5px 11px;font-size:12.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.count{font-size:12.5px;color:var(--muted)}
+.status{font-size:13.5px;color:var(--muted)}
+.status.err{color:var(--rosehip)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--rule);
+  border-top-color:var(--sea);border-radius:50%;animation:sp .7s linear infinite;
+  vertical-align:-1px;margin-right:7px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hide{display:none}
+
+/* ---- candidate lines ---- */
+.cands{display:grid;gap:10px;margin-top:14px}
+.cand{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;
+  gap:14px;align-items:baseline;text-align:left;width:100%}
+.cand:hover{border-color:var(--sea)}
+.cand .l{font-family:var(--serif);font-size:19px;line-height:1.3}
+.cand .m{font-size:11.5px;color:var(--muted);flex:none}
+
+/* ---- read ---- */
+.diag{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:21px}
+.readings{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:700px){.readings{grid-template-columns:1fr}}
+.reading{border:1px solid var(--rule);border-radius:2px;padding:15px;cursor:pointer;text-align:left;background:transparent}
+.reading[aria-pressed="true"]{border-color:var(--sea);box-shadow:inset 3px 0 0 var(--sea);border-radius:0}
+.reading .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+.reading .v{font-family:var(--serif);font-size:17px;line-height:1.35}
+.altwhy{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.dl{display:grid;grid-template-columns:110px 1fr;gap:8px 16px;font-size:14px;margin-bottom:16px}
+.dl dt{color:var(--muted);font-size:12.5px}
+.dl dd{margin:0}
+.fit{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.fit .bar{flex:1;max-width:200px;height:3px;background:var(--fog);overflow:hidden}
+.fit .bar i{display:block;height:100%;background:var(--sea)}
+.fit .num{font-family:var(--serif);font-size:21px}
+.risks{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+.cross{padding:11px 13px;border-radius:2px;font-size:13px;margin-bottom:16px}
+.cross.ok{background:var(--moss-soft);color:var(--moss)}
+.cross.adapt{background:var(--amber-soft);color:var(--amber)}
+.cross.no{background:var(--rosehip-soft);color:var(--rosehip)}
+.cross.hide{display:none}
+
+/* ---- spread ---- */
+.skips{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:13px 15px;font-size:13px;color:var(--muted);margin-top:14px}
+.skips b{color:var(--ink);font-weight:500}
+.skips div{margin-bottom:4px}
+
+/* ---- work ---- */
+.findings{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:15px 17px;margin-bottom:17px}
+.findings .k{font-size:11px;color:var(--muted);margin-bottom:7px}
+.findings ul{margin:0;padding-left:17px;font-size:14px}
+.findings li{margin-bottom:4px}
+.matrix{display:grid;gap:15px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.cell{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:16px;display:flex;flex-direction:column}
+.cell.pinned{border-color:var(--moss);box-shadow:inset 3px 0 0 var(--moss);border-radius:0}
+.cell.stale{opacity:.55}
+.cell .meta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:12px;color:var(--muted);margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--fog)}
+.cell .meta b{font-weight:600;color:var(--ink)}
+.cell .score{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.field{margin-bottom:12px}
+.field .k{font-size:11px;color:var(--muted);margin-bottom:3px}
+.field .v{font-family:var(--serif);line-height:1.35}
+.field.h .v{font-size:20px}
+.field.b .v{font-size:15.5px;line-height:1.5;white-space:pre-wrap}
+.field.c .v{font-size:14px;font-family:var(--sans);color:var(--sea)}
+.meter{height:2px;background:var(--fog);margin-top:5px;position:relative}
+.meter i{display:block;height:100%;background:var(--moss);max-width:100%}
+.meter.over i{background:var(--rosehip)}
+.meter em{position:absolute;right:0;top:5px;font-style:normal;font-size:10.5px;color:var(--muted)}
+.meter.over em{color:var(--rosehip)}
+.carried{font-size:12.5px;color:var(--muted);border-top:1px solid var(--fog);padding-top:10px;margin-top:auto}
+.flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.flag{font-size:11px;padding:2px 7px;border-radius:2px}
+.flag.pass{background:var(--moss-soft);color:var(--moss)}
+.flag.warn{background:var(--amber-soft);color:var(--amber)}
+.flag.fail{background:var(--rosehip-soft);color:var(--rosehip)}
+.cellacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--fog)}
+.why{margin-top:9px;padding-top:9px;border-top:1px solid var(--fog)}
+.why.hide{display:none}
+.why .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+.siblings{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:11px 14px;font-size:13px;margin-bottom:16px}
+.siblings.hide{display:none}
+.siblings button{border:0;background:transparent;cursor:pointer;color:var(--sea);
+  font-family:var(--serif);font-size:15px;padding:0;margin-right:14px;text-decoration:underline}
+
+/* ---- variants (express) ---- */
+.variant{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:19px;margin-bottom:14px}
+.variant .vhead{display:flex;align-items:center;gap:12px;margin-bottom:13px;
+  padding-bottom:10px;border-bottom:1px solid var(--fog)}
+.variant .vhead .bar{flex:1;max-width:140px;height:3px;background:var(--fog)}
+.variant .vhead .bar i{display:block;height:100%;background:var(--sea)}
+.variant .copy{font-family:var(--serif);font-size:17.5px;line-height:1.55;white-space:pre-wrap}
+.empty{border:1px dashed var(--rule);border-radius:2px;padding:26px;text-align:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <div class="mark">DK Copy <span>Studio</span></div>
+    <div class="sub">Landal, Danish market</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="langbox">
+    <span class="lbl">Output</span>
+    <div class="seg" role="group" aria-label="Output language">
+      <button id="langEn" aria-pressed="true">English</button>
+      <button id="langDa" aria-pressed="false">Dansk</button>
+    </div>
+  </div>
+</header>
+
+<div class="debugbar" id="debugbar">
+  Debug mode. The Danish skill is loaded and doing the brand thinking, but output is
+  rendered in English. Switch to Dansk before anything goes near a real channel.
+</div>
+
+<!-- sticky idea bar, appears once the DNA is locked -->
+<div class="ideabar hide" id="ideabar">
+  <div class="in">
+    <div class="dnawrap">
+      <div class="k">Locked idea</div>
+      <textarea id="dna" rows="1"></textarea>
+    </div>
+    <div class="side">
+      <div class="branchsw hide" id="branchsw">
+        <button id="brA" aria-pressed="true">A</button>
+        <button id="brB" aria-pressed="false">B</button>
+      </div>
+      <span class="stale hide" id="staleTag">Cells are stale</span>
+      <button class="btn ghost small" id="btnRestart">Start over</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 1. START ============ -->
+<section class="step" id="stepStart">
+  <h2><span class="n">1</span>Start</h2>
+  <p class="lede">Two ways in. Both end up in the same place.</p>
+  <div class="inner">
+    <div class="doors">
+
+      <div class="door">
+        <h3>Paste a line</h3>
+        <div class="d">You already have something. Go straight to the read.</div>
+        <textarea id="seed" class="seedbox" placeholder="Chaos. Supervised."></textarea>
+        <div class="grid2" style="margin-top:12px">
+          <label class="f"><span class="t">Written in</span>
+            <select id="srcLang">
+              <option value="da">Danish</option>
+              <option value="nl">Dutch</option>
+              <option value="en" selected>English</option>
+              <option value="de">German</option>
+            </select>
+          </label>
+          <label class="f"><span class="t">Context, optional</span>
+            <input type="text" id="seedCtx" placeholder="Staylists, School's Out">
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnRead">Read the line</button>
+          <span class="status" id="readStatus"></span>
+        </div>
+      </div>
+
+      <div class="door">
+        <h3>Write a brief</h3>
+        <div class="d">No line yet. This makes six to choose from.</div>
+        <div class="grid2">
+          <label class="f"><span class="t">Audience</span>
+            <select id="bAud">
+              <option>Hot, Conversion Champions (DK)</option>
+              <option>Warm, Brand Explorers (DK)</option>
+              <option>Cold, Future Fans (DK)</option>
+            </select>
+          </label>
+          <label class="f"><span class="t">Funnel stage</span>
+            <select id="bFun"><option>Awareness</option><option selected>Consideration</option><option>Conversion</option></select>
+          </label>
+        </div>
+        <label class="f"><span class="t">What it is about</span>
+          <input type="text" id="bMsg" placeholder="A week where nobody has to be anywhere.">
+        </label>
+        <label class="f"><span class="t">Details, offer mechanic, park</span>
+          <textarea id="bDet" placeholder="Placeholders for anything unconfirmed. [BELØB], [DATO], [PARKNAVN]."></textarea>
+        </label>
+        <div class="row">
+          <button class="btn" id="btnLines">Make lines</button>
+          <button class="btn ghost small" id="btnExpress">Just write it</button>
+          <span class="status" id="linesStatus"></span>
+        </div>
+        <div class="cands" id="cands"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. READ ============ -->
+<section class="step locked" id="stepRead">
+  <h2><span class="n">2</span>Read</h2>
+  <p class="lede">What the line is doing, and the one idea underneath it.</p>
+  <div class="inner">
+    <div class="diag">
+      <div class="cross hide" id="crossBox"></div>
+      <div class="readings">
+        <button class="reading" id="readA" aria-pressed="true">
+          <div class="k">Reading A</div><div class="v" id="dnaA"></div>
+        </button>
+        <button class="reading" id="readB" aria-pressed="false">
+          <div class="k">Reading B</div><div class="v" id="dnaB"></div>
+        </button>
+      </div>
+      <div class="altwhy" id="altWhy"></div>
+      <dl class="dl">
+        <dt>Mechanic</dt><dd id="dMech"></dd>
+        <dt>Promise</dt><dd id="dProm"></dd>
+        <dt>Register</dt><dd id="dReg"></dd>
+        <dt>Sits at</dt><dd id="dFun"></dd>
+      </dl>
+      <div class="fit">
+        <span class="count">Brand fit</span>
+        <div class="bar"><i id="fitBar" style="width:0%"></i></div>
+        <span class="num" id="fitNum">0</span>
+      </div>
+      <div class="count" id="fitWhy" style="margin-bottom:15px"></div>
+      <div class="count" style="margin-bottom:5px">What breaks when it moves</div>
+      <ul class="risks" id="dRisks"></ul>
+      <div class="row" style="margin-top:18px">
+        <button class="btn" id="btnLock">Lock this reading</button>
+        <button class="btn ghost" id="btnFork">Fork both</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. SPREAD ============ -->
+<section class="step locked" id="stepSpread">
+  <h2><span class="n">3</span>Spread</h2>
+  <p class="lede" id="spreadLede">Where it goes. Adjust anything the tool got wrong.</p>
+  <div class="inner">
+    <div class="count" style="margin-bottom:7px">Platforms</div>
+    <div class="chips" id="platChips"></div>
+    <div class="count" style="margin:15px 0 7px">Audiences</div>
+    <div class="chips" id="audChips"></div>
+    <div class="skips hide" id="skipBox"></div>
+    <div class="row" style="margin-top:17px">
+      <button class="btn" id="btnExpand">Expand</button>
+      <span class="count" id="comboCount"></span>
+      <span class="status" id="expStatus"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. WORK ============ -->
+<section class="step locked" id="stepWork">
+  <h2><span class="n">4</span>Work</h2>
+  <p class="lede">Pin what holds. Regenerate what does not. Promote anything better than the seed.</p>
+  <div class="inner">
+    <div class="siblings hide" id="siblings"></div>
+    <div class="findings hide" id="findings"></div>
+    <div class="row" style="margin-bottom:15px">
+      <button class="btn ghost small" id="btnCopyAll">Copy all as text</button>
+      <button class="btn ghost small" id="btnJson">Copy as JSON</button>
+      <button class="btn ghost small" id="btnHandoff">Copy as prompt block</button>
+      <span class="count" id="pinCount"></span>
+    </div>
+    <div class="matrix" id="matrix"></div>
+  </div>
+</section>
+
+<!-- ============ EXPRESS ============ -->
+<section class="step locked hide" id="stepExpress">
+  <h2><span class="n">2</span>Copy</h2>
+  <p class="lede">Express lane. No read, no lock.</p>
+  <div class="inner"><div id="variants"></div></div>
+</section>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   Platform specs. Single source of truth, sent with each
+   request. Tune the numbers here and everything follows.
+   ========================================================= */
+var SPECS = {
+  "Meta feed":{name:"Meta feed",limits:{headline:40,body:125,cta:20},
+    guidance:"The hook must land before the more button cuts the text."},
+  "Story frame":{name:"Story frame",limits:{headline:30,body:110,cta:18},
+    guidance:"The headline is on screen text. Five words maximum, one dominant line."},
+  "TikTok / Reels":{name:"TikTok / Reels",limits:{headline:40,body:150,cta:20},
+    guidance:"Caption reads like a person, not a brand. Lower case is fine."},
+  "Google Search":{name:"Google Search",limits:{headline:30,body:90,cta:15},
+    guidance:"Responsive search ad. Headline and description are hard truncated."},
+  "Email":{name:"Email",limits:{headline:40,body:200,cta:25},
+    guidance:"Headline is the subject line and must survive a mobile preview."},
+  "Display banner":{name:"Display banner",limits:{headline:25,body:40,cta:15},
+    guidance:"Very little room. Every word has to earn its place."},
+  "Outdoor":{name:"Outdoor",limits:{headline:30,body:45,cta:15},
+    guidance:"Read at distance in about two seconds. Seven words across the whole panel."},
+  "Park page hero":{name:"Park page hero",limits:{headline:45,body:110,cta:25},
+    guidance:"Sensory and specific. The park name sits quietly at the end."},
+  "Push notification":{name:"Push notification",limits:{headline:40,body:120,cta:15},
+    guidance:"Arrives uninvited, so it must be worth the interruption."},
+  "Booking confirmation":{name:"Booking confirmation",limits:{headline:45,body:220,cta:25},
+    guidance:"Warm and short. Anticipation, never transaction."}
+};
+
+var AUDIENCES = [
+  {k:"Hot",sub:"Conversion Champions"},
+  {k:"Warm",sub:"Brand Explorers"},
+  {k:"Cold",sub:"Future Fans"}
+];
+
+var REASONS = ["Too clever","Doesn't carry the DNA","Too long","Sounds translated",
+  "Too soft","Selling too hard"];
+
+/* =========================================================
+   Guardrails. Deterministic, client side, instant.
+   ========================================================= */
+var FORBIDDEN_DA = ["fantastisk","ultimativ","perfekt","spektakulær","drømmeferie","paradis",
+  "uovertruffen","garanteret","uforglemmelig","enestående","magisk","skynd dig",
+  "gå ikke glip af","sidste chance","kun i dag","grib chancen","laveste pris",
+  "vanvittig","spar stort","kæmpe besparelse","luksuspark","faciliteter","autentisk"];
+var FORBIDDEN_EN = ["amazing","ultimate","perfect","spectacular","dream holiday","paradise",
+  "unbeatable","guaranteed","unforgettable","unmissable","magical","hurry",
+  "don't miss out","last chance","today only","lowest price","huge savings",
+  "luxury park","facilities","authentic","bucket list"];
+
+function guardrails(cell, spec){
+  var flags = [], all = [cell.headline, cell.body, cell.cta].join(" ");
+  if (/[\u2014\u2013]/.test(all)) flags.push({level:"fail",msg:"Em dash"});
+  if (/GreenParks/i.test(all))    flags.push({level:"fail",msg:"GreenParks"});
+  if (/!/.test(all))              flags.push({level:"fail",msg:"Exclamation mark"});
+
+  var low = all.toLowerCase(), hits = [];
+  FORBIDDEN_DA.concat(FORBIDDEN_EN).forEach(function(w){
+    if (low.indexOf(w) !== -1) hits.push(w);
+  });
+  if (hits.length) flags.push({level:"fail",msg:"Word bank: " + hits.slice(0,3).join(", ")});
+
+  if (spec && spec.limits){
+    ["headline","body","cta"].forEach(function(f){
+      var lim = spec.limits[f], v = cell[f] || "";
+      if (lim && v.length > lim) flags.push({level:"fail",msg:f+" "+v.length+"/"+lim});
+    });
+  }
+  var stripped = all.replace(/\[[^\]]*\]/g,"");
+  if (/\d[\d.,]*\s*(kr\.?|DKK|€|£)/i.test(stripped) || /(£|€)\s*\d/.test(stripped))
+    flags.push({level:"warn",msg:"Unbracketed amount, verify"});
+  if (/\b\d{1,2}\.\s?(januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december)/i.test(stripped))
+    flags.push({level:"warn",msg:"Unbracketed date, verify"});
+
+  if (!flags.length) flags.push({level:"pass",msg:"Clean"});
+  return flags;
+}
+
+/* =========================================================
+   Findings. Computed client side from the matrix, so they
+   are instant, free, and pointed at the idea not the output.
+   ========================================================= */
+function findings(cells, fit){
+  var out = [];
+  if (!cells.length) return out;
+
+  var weak = cells.filter(function(c){ return c.score < 60; });
+  if (weak.length >= 2){
+    ["funnel","platform","audience"].forEach(function(key){
+      var vals = weak.map(function(c){ return c[key]; });
+      var uniq = vals.filter(function(v,i){ return vals.indexOf(v) === i; });
+      if (uniq.length === 1 && weak.length >= 2 && out.length < 2){
+        var total = cells.filter(function(c){ return c[key] === uniq[0]; }).length;
+        if (weak.length === total)
+          out.push("Every " + uniq[0] + " cell scored under 60. This line resists that " +
+                   (key === "funnel" ? "funnel stage" : key) + ".");
+      }
+    });
+  }
+
+  var best = cells.reduce(function(a,b){ return b.score > a.score ? b : a; });
+  if (fit && best.score > fit + 8)
+    out.push("The " + best.platform + " cell scores " + best.score + " against the seed's " +
+             fit + ". Worth promoting it to seed.");
+
+  var failing = cells.filter(function(c){
+    return guardrails(c, SPECS[c.platform]).some(function(f){ return f.level === "fail"; });
+  });
+  if (failing.length)
+    out.push(failing.length + " of " + cells.length + " cells break a rule. Check the red flags.");
+
+  var over = cells.filter(function(c){
+    var s = SPECS[c.platform];
+    return s && s.limits.headline && (c.headline || "").length > s.limits.headline;
+  });
+  if (over.length >= 2)
+    out.push("Headlines run long on " + over.length + " platforms. The idea may need a shorter form.");
+
+  return out;
+}
+
+/* =========================================================
+   State. A branch is one reading of one seed.
+   ========================================================= */
+function newBranch(id){
+  return {id:id, dna:"", mechanic:"", promise:"", register:"", funnel:"",
+          crossing:"", crossingWhy:"", fit:0, fitWhy:"", risks:[],
+          platforms:[], audiences:[], skips:[], spreadWhy:"", cells:[]};
+}
+var S = {
+  lang:"en", srcLang:"en", seed:"", seedCtx:"",
+  read:null,
+  branches:[newBranch("A")], active:0, forked:false,
+  chosenReading:"A",
+  siblings:[]
+};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function B(){ return S.branches[S.active]; }
+
+/* =========================================================
+   API
+   ========================================================= */
+function api(p){
+  p.lang = S.lang; p.srcLang = S.srcLang;
+  return fetch("/.netlify/functions/generate",{
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(p)
+  }).then(function(r){
+    return r.text().then(function(txt){
+      var d = null;
+      try { d = JSON.parse(txt); } catch(e) { d = null; }
+
+      if (!d){
+        if (r.status === 404 || /^\s*<(!doctype|html)/i.test(txt))
+          throw new Error("The generate function is not deployed. The site returned its "+
+            "404 page instead of JSON. Open /.netlify/functions/generate directly in a "+
+            "browser: if that 404s too, Netlify never created the function. Check the "+
+            "Functions tab in Netlify, and that publish and functions are not the same "+
+            "directory in netlify.toml.");
+        if (!txt.trim())
+          throw new Error("The function returned an empty response (HTTP "+r.status+"). "+
+            "That means it crashed before it could reply. Check the function log in "+
+            "Netlify under Functions, generate, which will name the error.");
+        throw new Error("The function returned something that is not JSON (HTTP "+
+          r.status+"): "+txt.slice(0,140));
+      }
+
+      if (!r.ok) throw new Error(d.error || ("Request failed with "+r.status));
+      return d;
+    });
+  }).catch(function(e){
+    if (e instanceof TypeError)
+      throw new Error("Could not reach the function at all. Check the site is up and "+
+        "that you are not offline.");
+    throw e;
+  });
+}
+function busy(el,on,msg){ el.className="status"; el.innerHTML = on ? '<span class="spin"></span>'+esc(msg||"Working") : ""; }
+function fail(el,e){ el.className="status err"; el.textContent = e && e.message ? e.message : String(e); }
+
+/* =========================================================
+   Parsing
+   ========================================================= */
+function block(raw,key){
+  var m = raw.match(new RegExp("##"+key+"##([\\s\\S]*?)##\\/"+key+"##"));
+  return m ? m[1].trim() : "";
+}
+function csv(s){ return s.split(",").map(function(x){ return x.trim(); }).filter(Boolean); }
+
+function parseLines(raw){
+  var out=[], re=/##LINE_START##([\s\S]*?)##LINE_END##/g, m;
+  while ((m=re.exec(raw))!==null)
+    out.push({text:block(m[1],"TEXT"), mechanic:block(m[1],"MECHANIC")});
+  return out;
+}
+function parseRead(raw){
+  return {
+    dna:block(raw,"DNA"), altDna:block(raw,"ALT_DNA"), altWhy:block(raw,"ALT_WHY"),
+    mechanic:block(raw,"MECHANIC"), promise:block(raw,"PROMISE"),
+    register:block(raw,"REGISTER"), funnel:block(raw,"FUNNEL"),
+    crossing:block(raw,"CROSSING"), crossingWhy:block(raw,"CROSSING_WHY"),
+    fit:parseInt(block(raw,"FIT"),10)||0, fitWhy:block(raw,"FIT_WHY"),
+    risks:block(raw,"RISKS").split("\n").map(function(l){return l.replace(/^[-*]\s*/,"").trim();}).filter(Boolean),
+    platforms:csv(block(raw,"PLATFORMS")).filter(function(p){ return SPECS[p]; }),
+    audiences:csv(block(raw,"AUDIENCES")),
+    spreadWhy:block(raw,"SPREAD_WHY"),
+    skips:block(raw,"SKIP").split("\n").map(function(l){
+      var parts = l.replace(/^[-*]\s*/,"").split("|");
+      return parts.length>1 ? {p:parts[0].trim(), why:parts.slice(1).join("|").trim()} : null;
+    }).filter(Boolean)
+  };
+}
+function parseCells(raw){
+  var out=[], re=/##CELL_START##([\s\S]*?)##CELL_END##/g, m;
+  while ((m=re.exec(raw))!==null){
+    var b=m[1];
+    out.push({platform:block(b,"PLATFORM"), audience:block(b,"AUDIENCE"), funnel:block(b,"FUNNEL"),
+      headline:block(b,"HEADLINE"), body:block(b,"BODY"), cta:block(b,"CTA"),
+      score:parseInt(block(b,"SCORE"),10)||0, carried:block(b,"CARRIED"),
+      pinned:false, stale:false, showWhy:false});
+  }
+  return out;
+}
+function parseVariants(raw){
+  var out=[], re=/##VARIANT_START##([\s\S]*?)##VARIANT_END##/g, m;
+  while ((m=re.exec(raw))!==null){
+    var b=m[1], sc=b.match(/##SCORE:\s*(\d+)\s*##/), wy=b.match(/##WHY:\s*([\s\S]*?)##/);
+    out.push({score:sc?parseInt(sc[1],10):0, why:wy?wy[1].trim():"",
+      copy:b.replace(/##SCORE:[\s\S]*?##/,"").replace(/##WHY:[\s\S]*?##/,"").trim()});
+  }
+  return out;
+}
+
+/* =========================================================
+   Language
+   ========================================================= */
+function setLang(l){
+  S.lang=l;
+  $("langEn").setAttribute("aria-pressed", l==="en");
+  $("langDa").setAttribute("aria-pressed", l==="da");
+  $("debugbar").classList.toggle("hide", l==="da");
+}
+$("langEn").onclick=function(){ setLang("en"); };
+$("langDa").onclick=function(){ setLang("da"); };
+$("srcLang").onchange=function(){ S.srcLang = this.value; };
+
+/* =========================================================
+   Door 2: candidate lines and express lane
+   ========================================================= */
+function briefPayload(){
+  return {audience:$("bAud").value, funnel:$("bFun").value,
+          keyMessage:$("bMsg").value.trim(), details:$("bDet").value.trim()};
+}
+
+$("btnLines").onclick=function(){
+  busy($("linesStatus"),true,"Writing lines");
+  $("btnLines").disabled=true;
+  var p=briefPayload(); p.mode="lines";
+  api(p).then(function(d){
+    var ls=parseLines(d.raw);
+    if(!ls.length) throw new Error("No lines came back. Try again.");
+    $("cands").innerHTML="";
+    ls.forEach(function(l){
+      var b=document.createElement("button");
+      b.className="cand";
+      b.innerHTML='<span class="l">'+esc(l.text)+'</span><span class="m">'+esc(l.mechanic)+'</span>';
+      b.onclick=function(){
+        $("seed").value=l.text;
+        S.srcLang = S.lang;
+        $("srcLang").value = S.lang;
+        $("btnRead").click();
+      };
+      $("cands").appendChild(b);
+    });
+    busy($("linesStatus"),false);
+  }).catch(function(e){ fail($("linesStatus"),e); })
+    .then(function(){ $("btnLines").disabled=false; });
+};
+
+$("btnExpress").onclick=function(){
+  busy($("linesStatus"),true,"Writing");
+  $("btnExpress").disabled=true;
+  var p=briefPayload(); p.mode="brief"; p.variantCount=3;
+  api(p).then(function(d){
+    var vs=parseVariants(d.raw);
+    if(!vs.length) throw new Error("No variants came back.");
+    $("variants").innerHTML=vs.map(function(v){
+      var flags=guardrails({headline:"",body:v.copy,cta:""},null);
+      return '<div class="variant"><div class="vhead"><div class="bar"><i style="width:'+v.score+
+        '%"></i></div><span style="font-family:var(--serif);font-size:17px">'+v.score+
+        '</span><span class="count" style="flex:1">'+esc(v.why)+'</span></div>'+
+        '<div class="copy">'+esc(v.copy)+'</div><div class="flags">'+
+        flags.map(function(f){return '<span class="flag '+f.level+'">'+esc(f.msg)+'</span>';}).join("")+
+        '</div></div>';
+    }).join("");
+    $("stepExpress").classList.remove("locked","hide");
+    busy($("linesStatus"),false);
+    $("stepExpress").scrollIntoView({behavior:"smooth",block:"start"});
+  }).catch(function(e){ fail($("linesStatus"),e); })
+    .then(function(){ $("btnExpress").disabled=false; });
+};
+
+/* =========================================================
+   Step 2: read
+   ========================================================= */
+$("btnRead").onclick=function(){
+  var line=$("seed").value.trim();
+  if(!line){ fail($("readStatus"),new Error("Paste a line first.")); return; }
+  S.seed=line; S.seedCtx=$("seedCtx").value.trim(); S.srcLang=$("srcLang").value;
+  busy($("readStatus"),true,"Reading");
+  $("btnRead").disabled=true;
+
+  api({mode:"diagnose", line:line, context:S.seedCtx, platformList:Object.keys(SPECS)})
+    .then(function(d){
+      var g=parseRead(d.raw);
+      if(!g.dna) throw new Error("Could not read a DNA out of the response. Try again.");
+      S.read=g;
+      $("dnaA").textContent=g.dna;
+      $("dnaB").textContent=g.altDna || "No competing reading found.";
+      $("altWhy").textContent=g.altWhy;
+      $("dMech").textContent=g.mechanic;
+      $("dProm").textContent=g.promise;
+      $("dReg").textContent=g.register;
+      $("dFun").textContent=g.funnel;
+      $("fitBar").style.width=g.fit+"%";
+      $("fitNum").textContent=g.fit;
+      $("fitWhy").textContent=g.fitWhy;
+      $("dRisks").innerHTML=g.risks.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+
+      var cb=$("crossBox");
+      if(S.srcLang!=="da" && g.crossing){
+        var cls = g.crossing.indexOf("not")!==-1 ? "no"
+                : g.crossing.indexOf("adapted")!==-1 ? "adapt" : "ok";
+        var label = cls==="no" ? "Does not cross into Danish"
+                  : cls==="adapt" ? "Crosses, adapted" : "Crosses directly";
+        cb.className="cross "+cls;
+        cb.innerHTML="<b>"+esc(label)+".</b> "+esc(g.crossingWhy);
+      } else cb.className="cross hide";
+
+      setReading("A");
+      var hasAlt = !!g.altDna;
+      $("btnFork").disabled = !hasAlt;
+      $("readB").disabled = !hasAlt;
+      $("readB").style.opacity = hasAlt ? "1" : ".45";
+      $("stepRead").classList.remove("locked");
+      busy($("readStatus"),false);
+      $("stepRead").scrollIntoView({behavior:"smooth",block:"start"});
+    })
+    .catch(function(e){ fail($("readStatus"),e); })
+    .then(function(){ $("btnRead").disabled=false; });
+};
+
+function setReading(k){
+  S.chosenReading=k;
+  $("readA").setAttribute("aria-pressed", k==="A");
+  $("readB").setAttribute("aria-pressed", k==="B");
+}
+$("readA").onclick=function(){ setReading("A"); };
+$("readB").onclick=function(){ if(S.read && S.read.altDna) setReading("B"); };
+
+function applyRead(branch, dnaText){
+  var g=S.read;
+  branch.dna=dnaText; branch.mechanic=g.mechanic; branch.promise=g.promise;
+  branch.register=g.register; branch.funnel=g.funnel;
+  branch.crossing=g.crossing; branch.crossingWhy=g.crossingWhy;
+  branch.fit=g.fit; branch.fitWhy=g.fitWhy; branch.risks=g.risks;
+  branch.platforms=g.platforms.slice(); branch.audiences=g.audiences.slice();
+  branch.skips=g.skips; branch.spreadWhy=g.spreadWhy;
+}
+
+function afterLock(){
+  $("ideabar").classList.remove("hide");
+  $("dna").value=B().dna;
+  autosize($("dna"));
+  $("stepSpread").classList.remove("locked");
+  renderChips();
+  renderSkips();
+  $("stepSpread").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("btnLock").onclick=function(){
+  var text = S.chosenReading==="A" ? S.read.dna : S.read.altDna;
+  S.branches=[newBranch("A")]; S.active=0; S.forked=false;
+  applyRead(S.branches[0], text);
+  $("branchsw").classList.add("hide");
+  afterLock();
+};
+
+$("btnFork").onclick=function(){
+  if(!S.read.altDna){ return; }
+  S.branches=[newBranch("A"), newBranch("B")];
+  applyRead(S.branches[0], S.read.dna);
+  applyRead(S.branches[1], S.read.altDna);
+  S.active=0; S.forked=true;
+  $("branchsw").classList.remove("hide");
+  setBranch(0);
+  afterLock();
+};
+
+function setBranch(i){
+  S.active=i;
+  $("brA").setAttribute("aria-pressed", i===0);
+  $("brB").setAttribute("aria-pressed", i===1);
+  $("dna").value=B().dna; autosize($("dna"));
+  renderChips(); renderSkips(); renderMatrix();
+  $("stepWork").classList.toggle("locked", B().cells.length===0);
+}
+$("brA").onclick=function(){ setBranch(0); };
+$("brB").onclick=function(){ if(S.branches[1]) setBranch(1); };
+
+/* DNA edits mark unlocked cells stale */
+function autosize(t){ t.style.height="auto"; t.style.height=t.scrollHeight+"px"; }
+$("dna").oninput=function(){
+  autosize(this);
+  B().dna=this.value;
+  var changed=false;
+  B().cells.forEach(function(c){ if(!c.pinned && !c.stale){ c.stale=true; changed=true; } });
+  $("staleTag").classList.toggle("hide", !B().cells.some(function(c){return c.stale;}));
+  if(changed) renderMatrix();
+};
+
+$("btnRestart").onclick=function(){ location.reload(); };
+
+/* =========================================================
+   Step 3: spread
+   ========================================================= */
+function renderChips(){
+  var b=B();
+  var sugg = S.read ? S.read.platforms : [];
+  var p=$("platChips"); p.innerHTML="";
+  Object.keys(SPECS).forEach(function(k){
+    var el=document.createElement("button");
+    var on = b.platforms.indexOf(k)!==-1;
+    el.className="chip"+(sugg.indexOf(k)!==-1?" sugg":"");
+    el.setAttribute("aria-pressed", on);
+    el.innerHTML=esc(k)+"<small>"+Object.keys(SPECS[k].limits).map(function(f){
+      return f.charAt(0)+" "+SPECS[k].limits[f];
+    }).join(" \u00b7 ")+"</small>";
+    el.onclick=function(){
+      var i=b.platforms.indexOf(k);
+      if(i===-1) b.platforms.push(k); else b.platforms.splice(i,1);
+      renderChips();
+    };
+    p.appendChild(el);
+  });
+
+  var a=$("audChips"); a.innerHTML="";
+  AUDIENCES.forEach(function(x){
+    var el=document.createElement("button");
+    el.className="chip";
+    el.setAttribute("aria-pressed", b.audiences.indexOf(x.k)!==-1);
+    el.innerHTML=esc(x.k)+"<small>"+esc(x.sub)+"</small>";
+    el.onclick=function(){
+      var i=b.audiences.indexOf(x.k);
+      if(i===-1) b.audiences.push(x.k); else b.audiences.splice(i,1);
+      renderChips();
+    };
+    a.appendChild(el);
+  });
+
+  var n=b.platforms.length*b.audiences.length;
+  $("comboCount").textContent = n ? n+" cell"+(n===1?"":"s") : "Pick at least one of each";
+  $("btnExpand").disabled = n===0;
+  $("spreadLede").textContent = b.spreadWhy || "Where it goes. Adjust anything the tool got wrong.";
+}
+
+function renderSkips(){
+  var b=B(), box=$("skipBox");
+  if(!b.skips || !b.skips.length){ box.className="skips hide"; return; }
+  box.className="skips";
+  box.innerHTML="<div class='count' style='margin-bottom:7px'>Deliberately skipped</div>"+
+    b.skips.map(function(s){ return "<div><b>"+esc(s.p)+"</b>. "+esc(s.why)+"</div>"; }).join("");
+}
+
+$("btnExpand").onclick=function(){
+  var b=B();
+  var dna=$("dna").value.trim();
+  if(!dna){ fail($("expStatus"),new Error("The idea field is empty.")); return; }
+  b.dna=dna;
+  var specs={}; b.platforms.forEach(function(k){ specs[k]=SPECS[k]; });
+
+  busy($("expStatus"),true,"Expanding "+(b.platforms.length*b.audiences.length)+" cells");
+  $("btnExpand").disabled=true;
+
+  api({mode:"expand", line:S.seed, dna:dna, mechanic:b.mechanic, promise:b.promise,
+       crossing:b.crossing, crossingWhy:b.crossingWhy,
+       platforms:b.platforms, audiences:b.audiences, specs:specs})
+    .then(function(d){
+      var got=parseCells(d.raw);
+      if(!got.length) throw new Error("No cells came back. Try expanding again.");
+      var pinned=b.cells.filter(function(c){ return c.pinned; });
+      b.cells=got.map(function(c){
+        var keep=pinned.filter(function(l){
+          return l.platform===c.platform && l.audience===c.audience; })[0];
+        return keep || c;
+      });
+      $("staleTag").classList.add("hide");
+      renderMatrix();
+      $("stepWork").classList.remove("locked");
+      busy($("expStatus"),false);
+      $("stepWork").scrollIntoView({behavior:"smooth",block:"start"});
+    })
+    .catch(function(e){ fail($("expStatus"),e); })
+    .then(function(){ $("btnExpand").disabled=false; });
+};
+
+/* =========================================================
+   Step 4: work
+   ========================================================= */
+function meter(v,lim){
+  if(!lim) return "";
+  var pct=Math.min(100,Math.round((v.length/lim)*100)), over=v.length>lim;
+  return '<div class="meter'+(over?" over":"")+'"><i style="width:'+pct+'%"></i><em>'+
+    v.length+"/"+lim+"</em></div>";
+}
+
+function renderMatrix(){
+  var b=B(), m=$("matrix");
+  renderSiblings();
+  if(!b.cells.length){ m.innerHTML='<div class="empty">Nothing expanded yet.</div>';
+    $("findings").className="findings hide"; return; }
+
+  var f=findings(b.cells, b.fit);
+  if(f.length){
+    $("findings").className="findings";
+    $("findings").innerHTML="<div class='k'>What the matrix says about the idea</div><ul>"+
+      f.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+"</ul>";
+  } else $("findings").className="findings hide";
+
+  m.innerHTML="";
+  b.cells.forEach(function(c,idx){
+    var spec=SPECS[c.platform]||null, lim=spec?spec.limits:{};
+    var flags=guardrails(c,spec);
+    var el=document.createElement("div");
+    el.className="cell"+(c.pinned?" pinned":"")+(c.stale?" stale":"");
+    el.innerHTML=
+      '<div class="meta"><span><b>'+esc(c.platform)+"</b> \u00b7 "+esc(c.audience)+
+        " \u00b7 "+esc(c.funnel)+'</span><span class="score">'+c.score+"</span></div>"+
+      '<div class="field h"><div class="k">Headline</div><div class="v">'+esc(c.headline)+
+        "</div>"+meter(c.headline,lim.headline)+"</div>"+
+      '<div class="field b"><div class="k">Body</div><div class="v">'+esc(c.body)+
+        "</div>"+meter(c.body,lim.body)+"</div>"+
+      '<div class="field c"><div class="k">CTA</div><div class="v">'+esc(c.cta)+
+        "</div>"+meter(c.cta,lim.cta)+"</div>"+
+      '<div class="flags">'+flags.map(function(x){
+        return '<span class="flag '+x.level+'">'+esc(x.msg)+"</span>"; }).join("")+"</div>"+
+      '<div class="carried">'+esc(c.carried)+"</div>"+
+      '<div class="cellacts">'+
+        '<button class="btn ghost small" data-a="pin" data-i="'+idx+'">'+(c.pinned?"Unpin":"Pin")+"</button>"+
+        '<button class="btn ghost small" data-a="why" data-i="'+idx+'"'+(c.pinned?" disabled":"")+">Regenerate</button>"+
+        '<button class="btn ghost small" data-a="promote" data-i="'+idx+'">Promote to seed</button>'+
+        '<button class="btn ghost small" data-a="copy" data-i="'+idx+'">Copy</button>'+
+        '<span class="status" data-s="'+idx+'"></span>'+
+      "</div>"+
+      '<div class="why'+(c.showWhy?"":" hide")+'"><div class="k">What is wrong with it</div>'+
+        '<div class="chips">'+REASONS.map(function(r){
+          return '<button class="chip" data-a="re" data-i="'+idx+'" data-r="'+esc(r)+'">'+esc(r)+"</button>";
+        }).join("")+"</div></div>";
+    m.appendChild(el);
+  });
+
+  var n=b.cells.filter(function(c){ return c.pinned; }).length;
+  $("pinCount").textContent=n+" of "+b.cells.length+" pinned";
+
+  m.querySelectorAll("button[data-a]").forEach(function(btn){
+    btn.onclick=function(){
+      var i=parseInt(btn.dataset.i,10), a=btn.dataset.a;
+      if(a==="pin"){ B().cells[i].pinned=!B().cells[i].pinned; B().cells[i].stale=false; renderMatrix(); }
+      else if(a==="why"){ B().cells[i].showWhy=!B().cells[i].showWhy; renderMatrix(); }
+      else if(a==="re"){ regenerate(i, btn.dataset.r); }
+      else if(a==="promote"){ promote(i); }
+      else if(a==="copy"){ toClipboard(cellText(B().cells[i])); btn.textContent="Copied"; }
+    };
+  });
+}
+
+function regenerate(i, reason){
+  var b=B(), c=b.cells[i];
+  var st=document.querySelector('[data-s="'+i+'"]');
+  busy(st,true,"");
+  api({mode:"recell", line:S.seed, dna:$("dna").value.trim(), mechanic:b.mechanic,
+       platform:c.platform, audience:c.audience, funnel:c.funnel,
+       spec:SPECS[c.platform]||null, reason:reason,
+       previous:[c.headline,c.body,c.cta].join(" / ")})
+    .then(function(d){
+      var got=parseCells(d.raw);
+      if(!got.length) throw new Error("Nothing came back.");
+      got[0].pinned=false; got[0].stale=false; got[0].showWhy=false;
+      b.cells[i]=got[0];
+      renderMatrix();
+    })
+    .catch(function(e){ fail(st,e); });
+}
+
+/* Promote a cell to seed. The current work is kept as a sibling. */
+function promote(i){
+  var c=B().cells[i];
+  if(!c.headline) return;
+  S.siblings.push({seed:S.seed, dna:B().dna, cells:B().cells.slice()});
+  $("seed").value=c.headline;
+  $("seedCtx").value="Promoted from the "+c.platform+" cell";
+  S.srcLang=S.lang; $("srcLang").value=S.lang;
+  $("stepSpread").classList.add("locked");
+  $("stepWork").classList.add("locked");
+  $("ideabar").classList.add("hide");
+  window.scrollTo({top:0,behavior:"smooth"});
+  $("btnRead").click();
+}
+
+function renderSiblings(){
+  var box=$("siblings");
+  if(!S.siblings.length){ box.className="siblings hide"; return; }
+  box.className="siblings";
+  box.innerHTML="<span class='count'>Earlier ideas: </span>"+
+    S.siblings.map(function(s,i){
+      return "<button data-sib='"+i+"'>"+esc(s.seed)+"</button>"; }).join("");
+  box.querySelectorAll("button[data-sib]").forEach(function(btn){
+    btn.onclick=function(){
+      var s=S.siblings[parseInt(btn.dataset.sib,10)];
+      S.seed=s.seed; B().dna=s.dna; B().cells=s.cells;
+      $("dna").value=s.dna; autosize($("dna"));
+      renderMatrix();
+    };
+  });
+}
+
+/* =========================================================
+   Export
+   ========================================================= */
+function cellText(c){
+  return c.platform+" \u00b7 "+c.audience+" \u00b7 "+c.funnel+"\n"+
+    c.headline+"\n\n"+c.body+"\n\n"+c.cta;
+}
+function toClipboard(t,done){
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(done||function(){});
+  else{
+    var ta=document.createElement("textarea"); ta.value=t;
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    if(done) done();
+  }
+}
+function flash(btn,label){
+  var old=btn.textContent; btn.textContent="Copied";
+  setTimeout(function(){ btn.textContent=label||old; },1400);
+}
+$("btnCopyAll").onclick=function(){
+  toClipboard("Seed: "+S.seed+"\nIdea: "+$("dna").value.trim()+"\n\n"+
+    B().cells.map(cellText).join("\n\n---\n\n"),
+    function(){ flash($("btnCopyAll"),"Copy all as text"); });
+};
+$("btnJson").onclick=function(){
+  toClipboard(JSON.stringify({seed:S.seed, dna:$("dna").value.trim(), lang:S.lang,
+    branch:B().id, cells:B().cells},null,2),
+    function(){ flash($("btnJson"),"Copy as JSON"); });
+};
+$("btnHandoff").onclick=function(){
+  var b=B();
+  toClipboard(
+    "I am working on Landal copy for the Danish market.\n\n"+
+    "Seed line: "+S.seed+"\n"+
+    "Locked idea: "+$("dna").value.trim()+"\n"+
+    "Mechanic: "+b.mechanic+"\n"+
+    "Promise: "+b.promise+"\n"+
+    "Register: "+b.register+"\n\n"+
+    "Adaptations so far:\n\n"+b.cells.map(cellText).join("\n\n---\n\n")+
+    "\n\nRules: no em dashes, brand is Landal never Landal GreenParks, "+
+    "no invented prices or dates, use bracketed placeholders.\n",
+    function(){ flash($("btnHandoff"),"Copy as prompt block"); });
+};
+
+/* boot */
+renderChips();
+renderMatrix();
+setLang("en");
+</script>
+</body>
+</html>
