@@ -32,37 +32,64 @@ prices and dates get a warn flag rather than a fail, because sometimes they are 
 
 ## Architecture
 
-    index.html                      Frontend, single file
-    netlify/functions/generate.js   Backend, four modes
-    netlify/functions/skill-dk.js   GENERATED. Do not edit
-    skill/landal-copy-skill-dk.md   Skill, source of truth
-    scripts/sync-skill.js           Compiles the markdown into the JS module
-    scripts/check-rules.js          Pre-commit rule check
+    index.html                      Frontend. Must be at the repo root
+    netlify/functions/generate.js   Backend. Self contained, skill inlined
+    skill/landal-copy-skill-dk.md   Skill, readable source of truth
+    scripts/sync-skill.js           Injects the markdown into generate.js
+    scripts/check-rules.js          Rule and drift check
+    scripts/preflight.sh            Run this before every push
 
-### Why the skill is compiled
+Only the first two files are needed at runtime. Everything under `scripts/` and
+`skill/` is a development convenience: if it went missing the deployed site would
+still work, it would just be harder to edit the skill safely.
+
+### Why the skill is inlined
 
 Netlify does not bundle files read with `fs.readFileSync` at runtime, which is how the
-skill silently stopped loading in an earlier studio. The fix there was to inline the
-skill as a template literal by hand, which then drifts every time the skill is edited.
+skill silently stopped loading in an earlier studio.
 
-Here the markdown stays readable and authoritative, and `sync-skill.js` compiles it into
-`skill-dk.js`, a real JS module that the bundler follows through a normal `require`.
-`skill-dk.js` is committed, so there is no build step at deploy time and no build stage
-that can fail. `check-rules.js` fails locally if the two have drifted.
+An earlier version of this repo solved that by generating a separate `skill-dk.js`
+module and requiring it. That was a mistake. It meant the function depended on a second
+file being present at an exact path, and when the folder structure did not survive an
+upload the function either vanished or crashed on startup with an empty response body,
+which is very hard to diagnose from the browser.
 
-**If you edit the skill, run this before committing. It is not optional, because
-nothing at deploy time will do it for you:**
+So the skill is now inlined directly into `generate.js` as a template literal, the same
+way UK Copy Studio and NL Copy Studio do it. The function has no local requires and no
+siblings. The only thing Netlify needs is `netlify/functions/generate.js`.
+
+The markdown stays the readable source of truth. `sync-skill.js` injects it into the
+`SKILL START` / `SKILL END` block in place, and `check-rules.js` fails if the two have
+drifted, so the usual cost of inlining is covered.
+
+**If you edit the skill, run this before committing:**
 
     node scripts/sync-skill.js
     node scripts/check-rules.js
 
-Then commit both `skill/landal-copy-skill-dk.md` and `netlify/functions/skill-dk.js`.
+Then commit both the markdown and `generate.js`.
 
----
+### Before every push
+
+    ./scripts/preflight.sh
+
+It checks the two required files are at the right paths, that nothing has been flattened
+to the root, that the function has no sibling requires, that the skill block is filled in
+and long enough, that the build command is pinned, and that nothing has drifted. It exits
+non zero on failure.
+
+### Health check
+
+Once deployed, open the function URL in a browser:
+
+    https://[site].netlify.app/.netlify/functions/generate
+
+A GET returns whether the skill loaded, how long it is, and whether the API key is set.
+No secrets, only booleans. That answers most deploy questions in one request.
 
 ## Setup
 
-1. Create the repo as `mlwrose/landal-copy-studio-dk` and push these files.
+1. Push these files to `mlwrose/landal-copy-studio-dk`, keeping the folder structure.
 2. Create the Netlify site from that repo.
 3. Set the environment variable, Site configuration, Environment variables:
 
