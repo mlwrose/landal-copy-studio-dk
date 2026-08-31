@@ -1,5 +1,15 @@
+# The build command is deliberately a no-op.
+#
+# index.html is static and netlify/functions/skill-dk.js is committed, so there is
+# nothing to compile at deploy time. But leaving `command` unset is not the same as
+# having no build: Netlify falls back to framework detection, finds package.json, and
+# runs `npm run build`, which does not exist here. Pinning it to a no-op stops that.
+#
+# The skill is synced locally before committing, never here:
+#   node scripts/sync-skill.js && node scripts/check-rules.js
+
 [build]
-  command = "node scripts/sync-skill.js"
+  command = "echo 'no build step required'"
   publish = "."
   functions = "netlify/functions"
 

@@ -47,19 +47,22 @@ skill as a template literal by hand, which then drifts every time the skill is e
 
 Here the markdown stays readable and authoritative, and `sync-skill.js` compiles it into
 `skill-dk.js`, a real JS module that the bundler follows through a normal `require`.
-`netlify.toml` runs the sync on every build, so a forgotten sync cannot ship stale copy.
-`check-rules.js` also fails if the two have drifted.
+`skill-dk.js` is committed, so there is no build step at deploy time and no build stage
+that can fail. `check-rules.js` fails locally if the two have drifted.
 
-**If you edit the skill, run this before committing:**
+**If you edit the skill, run this before committing. It is not optional, because
+nothing at deploy time will do it for you:**
 
     node scripts/sync-skill.js
     node scripts/check-rules.js
+
+Then commit both `skill/landal-copy-skill-dk.md` and `netlify/functions/skill-dk.js`.
 
 ---
 
 ## Setup
 
-1. Create the repo as `mlwrose/landal-dk-copy-studio` and push these files.
+1. Create the repo as `mlwrose/landal-copy-studio-dk` and push these files.
 2. Create the Netlify site from that repo.
 3. Set the environment variable, Site configuration, Environment variables:
 
