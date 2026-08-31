@@ -59,6 +59,10 @@ echo "rules and drift"
 node scripts/check-rules.js >/dev/null 2>&1 && ok "check-rules passes" \
   || bad "check-rules failed, run it directly to see why"
 
+echo "assets"
+[ -f public/assets/landal-logo-sand.png ] && ok "logo asset present" \
+  || bad "public/assets/landal-logo-sand.png missing, the masthead will show alt text"
+
 echo "stale references"
 if grep -q 'skill-dk.js' public/index.html netlify/functions/generate.js 2>/dev/null; then
   bad "something still references skill-dk.js, which no longer exists"
